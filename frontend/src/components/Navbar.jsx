@@ -11,6 +11,8 @@ const Navbar = () => {
                 <li><Link to="/products">Products</Link></li>
                 <li><Link to="/about">About Us</Link></li>
                 <li><Link to="/contact">Contact</Link></li>
+                <li><Link to="/wishlist" className="hover:text-pink-400">Wishlist</Link>
+        </li>
                 <li><Link to="/cart">Cart </Link></li>
             </ul>
         </nav>

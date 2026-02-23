@@ -10,8 +10,23 @@ const reviewsRoutes = require('./routes/reviews');
 const wishlistRoutes = require('./routes/wishlist'); 
 const adsRoutes = require('./routes/ads');
 
+const authRoutes = require('./routes/auth');
+const productRoutes = require('./routes/products');
+const orderRoutes = require('./routes/orders');
+const promoRoutes = require('./routes/promo');
+const userRoutes = require('./routes/users');
+
+console.log("Route types:", {
+  authRoutes: typeof authRoutes,
+  productRoutes: typeof productRoutes,
+  orderRoutes: typeof orderRoutes,
+  promoRoutes: typeof promoRoutes,
+  userRoutes: typeof userRoutes,
+});
+
 const app = express();
 app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.use('/api/contact', contactRoutes);
@@ -19,6 +34,12 @@ app.use('/api/products', productsRoutes);
 app.use('/api/reviews', reviewsRoutes); 
 app.use('/api/wishlist', wishlistRoutes); 
 app.use('/api/ads', adsRoutes);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/promo', promoRoutes);
+app.use('/api/users', userRoutes);
 
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI).then(() => {
