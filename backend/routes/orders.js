@@ -11,12 +11,26 @@ function verifyPayHereMd5(body, merchantSecret) {
     return localMd5 === (md5sig || '').toUpperCase();
 }
 
-router.post('/create', async (req,res)=>{
-    const { userId, items, subtotal, discount=0, shipping=0 } = req.body;
-    const total = subtotal - discount + shipping;
-    const order = new Order({ userId, items, subtotal, discount, shipping, total, paymentStatus:'pending' });
-    await order.save();
-    res.json({ orderId: order._id, total });
+const { verifyToken } = require("../middleware/auth");
+
+router.post("/create", verifyToken, async (req, res) => {
+  const { items, subtotal, discount = 0, shipping = 0 } = req.body;
+
+  const total = Number(subtotal || 0) - Number(discount || 0) + Number(shipping || 0);
+
+  const order = new Order({
+    userId: req.user.id,          // ✅ from token
+    items,
+    subtotal,
+    discount,
+    shipping,
+    total,
+    paymentStatus: "pending",
+  });
+
+  await order.save();
+
+  res.json({ success: true, orderId: order._id, total });
 });
 
 router.post('/payhere-notify', async (req,res)=>{
@@ -35,5 +49,6 @@ router.post('/payhere-notify', async (req,res)=>{
         res.sendStatus(200);
     } catch(e){ res.status(500).send('error'); }
 });
+
 
 module.exports = router;

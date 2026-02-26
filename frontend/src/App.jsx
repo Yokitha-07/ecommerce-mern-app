@@ -8,6 +8,11 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Wishlist from "./pages/Wishlist";
 import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import PaymentResult from './pages/PaymentResult';
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Admin from "./pages/Admin";
 
 function App() {
   return (
@@ -21,6 +26,12 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        // App.jsx / Routes
+        <Route path="/payment/result" element={<PaymentResult />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
       <Footer />
     </>

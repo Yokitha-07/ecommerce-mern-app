@@ -15,8 +15,19 @@ export default function TryOn({ overlayText = "TRY ON" }) {
 
     async function start() {
       try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setError("AR try-on is not supported in this browser/device.");
+          return;
+        }
+
         // 1) Camera
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "user",
+            width: { ideal: 640, max: 720 },
+            height: { ideal: 480, max: 720 },
+          },
+        });
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
 
@@ -79,7 +90,7 @@ export default function TryOn({ overlayText = "TRY ON" }) {
         loop();
       } catch (e) {
         console.log(e);
-        setError("Camera or model error. Please allow camera access.");
+        setError("Camera or AR model error. Please allow camera access or try a different device.");
       }
     }
 

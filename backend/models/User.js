@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-UserSchema.pre('save', function(next){
+UserSchema.pre('save', function(){
     if(this.isModified('role')){
         switch(this.role){
             case 'admin': this.permissions = ['user:*','product:*','order:*','promo:*']; break;
@@ -19,7 +19,6 @@ UserSchema.pre('save', function(next){
             default: this.permissions = []; break;
         }
     }
-    next();
 });
 
 module.exports = mongoose.model('User', UserSchema);

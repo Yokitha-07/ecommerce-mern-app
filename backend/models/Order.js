@@ -4,6 +4,8 @@ const OrderItemSchema = new mongoose.Schema({
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
     variantColor: String,
     size: String,
+    sizeLabel: String, // Alias for size
+    sku: String, // SKU for inventory tracking
     price: Number,
     qty: Number
 });
