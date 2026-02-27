@@ -202,10 +202,23 @@ export default function Checkout() {
         phone: formData.phone,
         address: formData.address,
         city: formData.city,
-        country: formData.country
+        country: formData.country,
+        hash: hash
       };
 
       localStorage.setItem("last_order_id", orderData.orderId);
+
+      const hashRes = await fetch(`${API}/api/payhere/hash`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    order_id: orderData.orderId,
+    amount: total,
+    currency: "LKR"
+  })
+});
+
+const { hash } = await hashRes.json();
 
       // Start PayHere payment
       window.payhere.startPayment(payment);
