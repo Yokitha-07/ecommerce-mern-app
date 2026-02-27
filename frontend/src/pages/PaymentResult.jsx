@@ -24,6 +24,8 @@ export default function PaymentResult() {
 
     localStorage.removeItem("cart");
   }
+    const stored = localStorage.getItem("last_order_id");
+if (stored) setOrderId(stored);
 }, [status, searchParams]);
 
   const isSuccess = status === "success";
@@ -37,8 +39,7 @@ export default function PaymentResult() {
     : "Payment Result";
 
   const icon = isSuccess ? "✅" : isCancel ? "❌" : "ℹ️";
-  const stored = localStorage.getItem("last_order_id");
-if (stored) setOrderId(stored);
+  
 
   return (
     <div className="container mx-auto p-6 text-center">
