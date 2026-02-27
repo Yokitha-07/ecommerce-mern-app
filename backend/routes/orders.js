@@ -74,5 +74,8 @@ router.post('/payhere-notify', async (req,res)=>{
     } catch(e){ res.status(500).send('error'); }
 });
 
+router.get("/payhere-notify", (req, res) => {
+  res.status(200).json({ ok: true, msg: "PayHere notify endpoint is reachable (GET ping)" });
+});
 
 module.exports = router;
