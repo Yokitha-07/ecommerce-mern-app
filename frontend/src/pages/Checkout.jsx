@@ -189,9 +189,9 @@ export default function Checkout() {
       const payment = {
         sandbox: import.meta.env.VITE_PAYHERE_SANDBOX !== 'false',
         merchant_id: import.meta.env.VITE_PAYHERE_MERCHANT_ID,
-        return_url: `${window.location.origin}/pay/result?status=success`,
-        cancel_url: `${window.location.origin}/pay/result?status=cancel`,
-        notify_url: `https://pimply-interspatial-randa.ngrok-free.dev/api/payhere-notify`,
+        return_url: `${import.meta.env.VITE_FRONTEND_URL}/pay/result?status=success`,
+        cancel_url: `${import.meta.env.VITE_FRONTEND_URL}/pay/result?status=cancel`,
+        notify_url: `https://ecommerce-mern-app-43id.onrender.com/api/payhere-notify`,
         order_id: orderData.orderId,
         items: cart.map(i => i.name).join(', ').substring(0, 100) || 'Cart Checkout',
         amount: total.toFixed(2),
