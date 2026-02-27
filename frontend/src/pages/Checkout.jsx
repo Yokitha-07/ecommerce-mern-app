@@ -185,13 +185,25 @@ export default function Checkout() {
         return;
       }
 
+      const hashRes = await fetch(`${API}/api/orders/payhere/hash`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: orderData.orderId,
+          amount: total,
+          currency: "LKR"
+        })
+      });
+
+      const { hash } = await hashRes.json();
+
       // Prepare PayHere payment
       const payment = {
         sandbox: import.meta.env.VITE_PAYHERE_SANDBOX !== 'false',
         merchant_id: import.meta.env.VITE_PAYHERE_MERCHANT_ID,
         return_url: `${import.meta.env.VITE_FRONTEND_URL}/pay/result?status=success`,
         cancel_url: `${import.meta.env.VITE_FRONTEND_URL}/pay/result?status=cancel`,
-        notify_url: `https://ecommerce-mern-app-43id.onrender.com/api/payhere-notify`,
+        notify_url: `https://ecommerce-mern-app-43id.onrender.com/api/orders/payhere-notify`,
         order_id: orderData.orderId,
         items: cart.map(i => i.name).join(', ').substring(0, 100) || 'Cart Checkout',
         amount: total.toFixed(2),
@@ -208,17 +220,6 @@ export default function Checkout() {
 
       localStorage.setItem("last_order_id", orderData.orderId);
 
-      const hashRes = await fetch(`${API}/api/payhere/hash`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    order_id: orderData.orderId,
-    amount: total,
-    currency: "LKR"
-  })
-});
-
-const { hash } = await hashRes.json();
 
       // Start PayHere payment
       window.payhere.startPayment(payment);
