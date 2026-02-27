@@ -15,17 +15,12 @@ export default function PaymentResult() {
   useEffect(() => {
   if (status === "success") {
     const orderIdParam = searchParams.get("order_id");
-    if (orderIdParam) {
-      setOrderId(orderIdParam);
-    } else {
-      const stored = localStorage.getItem("last_order_id");
-      if (stored) setOrderId(stored);
-    }
+    const stored = localStorage.getItem("last_order_id");
+
+    setOrderId(orderIdParam || stored || "");
 
     localStorage.removeItem("cart");
   }
-    const stored = localStorage.getItem("last_order_id");
-if (stored) setOrderId(stored);
 }, [status, searchParams]);
 
   const isSuccess = status === "success";
