@@ -13,14 +13,18 @@ export default function PaymentResult() {
   const [orderId, setOrderId] = useState("");
 
   useEffect(() => {
-    if (status === "success") {
-      const orderIdParam = searchParams.get("order_id");
-      if (orderIdParam) setOrderId(orderIdParam);
-
-      // Clear cart on successful payment
-      localStorage.removeItem("cart");
+  if (status === "success") {
+    const orderIdParam = searchParams.get("order_id");
+    if (orderIdParam) {
+      setOrderId(orderIdParam);
+    } else {
+      const stored = localStorage.getItem("last_order_id");
+      if (stored) setOrderId(stored);
     }
-  }, [status, searchParams]);
+
+    localStorage.removeItem("cart");
+  }
+}, [status, searchParams]);
 
   const isSuccess = status === "success";
   const isCancel = status === "cancel";
