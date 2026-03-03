@@ -4,6 +4,13 @@ import { API } from "../api";
 import TryOn from "../components/TryOn";
 import { Helmet } from "react-helmet-async";
 
+
+function getWishlistKey() {
+  const u = JSON.parse(localStorage.getItem("user") || "null");
+  const id = u?._id || u?.id || u?.email;
+  return id ? `wishlist_${String(id).toLowerCase()}` : "wishlist_guest";
+}
+
 export default function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
@@ -105,26 +112,47 @@ export default function ProductDetails() {
   }
 
   function addToWishlist() {
-    if (!product?._id) return;
+  if (!product?._id) return;
 
-    const wl = JSON.parse(localStorage.getItem("wishlist") || "[]");
-    const exists = wl.find(i => i._id === product._id);
-    if (exists) {
-      alert("Already in wishlist");
-      return;
-    }
+  const key = getWishlistKey();
+  const wl = JSON.parse(localStorage.getItem(key) || "[]");
 
-    wl.push({
-      _id: product._id,
-      name: product.name,
-      brand: product.brand,
-      description: product.description,
-      image: img,
-      basePrice: product.basePrice,
-    });
-    localStorage.setItem("wishlist", JSON.stringify(wl));
-    alert("Added to wishlist");
+  const exists = wl.find(
+    (i) =>
+      (i.productId || i._id) === product._id &&
+      i.variantColor === selectedVariant?.color &&
+      (i.sizeLabel || i.size) === selectedSizeObj?.sizeLabel
+  );
+
+  if (exists) {
+    alert("Already in wishlist");
+    return;
   }
+
+  const item = {
+    _id: product._id,
+    productId: product._id,
+    name: product.name,
+    brand: product.brand,
+    description: product.description,
+
+    // ✅ IMPORTANT: store both, so any UI works
+    image: img,
+    images: [img],
+
+    // ✅ IMPORTANT: store price (not only basePrice)
+    price: Number(price || product.basePrice || 0),
+
+    variantColor: selectedVariant?.color || "",
+    sizeLabel: selectedSizeObj?.sizeLabel || "",
+    sku: sku || "",
+  };
+
+  wl.push(item);
+  localStorage.setItem(key, JSON.stringify(wl));
+  alert("Added to wishlist");
+  window.dispatchEvent(new CustomEvent("wishlist_updated"));
+}
 
   if (!product) return <div>Loading...</div>;
 

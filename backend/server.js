@@ -16,13 +16,6 @@ const orderRoutes = require('./routes/orders');
 const promoRoutes = require('./routes/promo');
 const userRoutes = require('./routes/users');
 
-// console.log("Route types:", {
-//   authRoutes: typeof authRoutes,
-//   productRoutes: typeof productRoutes,
-//   orderRoutes: typeof orderRoutes,
-//   promoRoutes: typeof promoRoutes,
-//   userRoutes: typeof userRoutes,
-// });
 
 const app = express();
 app.use(cors());
@@ -43,6 +36,10 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/promo', promoRoutes);
 app.use('/api/users', userRoutes);
+
+app.use("/api/payhere", require("./routes/payhere"));
+
+
 
 app.get("/", (req, res) => {
   res.send("API is running ✅");

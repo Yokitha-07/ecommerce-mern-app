@@ -327,10 +327,22 @@ function UsersPanel() {
   );
 }
 
+
+
 function ProductsPanel() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  // Add form (minimal)
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    brand: "",
+    category: "",
+    basePrice: "",
+  });
 
   async function loadProducts() {
     try {
@@ -351,19 +363,166 @@ function ProductsPanel() {
     loadProducts();
   }, []);
 
+  // helper: total stock (inStock = totalStock > 0)
+  function totalStock(p) {
+    let t = 0;
+    (p.variants || []).forEach((v) => {
+      (v.sizes || []).forEach((s) => (t += Number(s.stock || 0)));
+    });
+    return t;
+  }
+
+  async function addProduct() {
+    try {
+      setBusy(true);
+      setError("");
+
+      const payload = {
+        name: form.name.trim(),
+        slug: form.name
+          .trim()
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, "")
+          .replace(/\s+/g, "-"),
+        brand: form.brand.trim(),
+        category: form.category.trim(),
+        basePrice: Number(form.basePrice || 0),
+        tags: [],
+        description: "",
+        variants: [
+          {
+            color: "Default",
+            colorCode: "#000000",
+            images: [],
+            model3d: "",
+            arOverlay: "",
+            price: Number(form.basePrice || 0),
+            originalPrice: null,
+            sizes: [
+              {
+                sizeLabel: "One Size",
+                countrySizes: { US: "", UK: "", EU: "", AU: "", JP: "" },
+                stock: 1, // default in stock
+                sku: "",
+              },
+            ],
+          },
+        ],
+      };
+
+      const res = await fetch(`${API}/api/products`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Create failed");
+
+      setShowAdd(false);
+      setForm({ name: "", brand: "", category: "", basePrice: "" });
+      await loadProducts();
+    } catch (e) {
+      console.error(e);
+      setError(e.message || "Failed to add product");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteProduct(id) {
+    const ok = window.confirm("Delete this product?");
+    if (!ok) return;
+
+    try {
+      setBusy(true);
+      setError("");
+
+      const res = await fetch(`${API}/api/products/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Delete failed");
+
+      setProducts((prev) => prev.filter((p) => p._id !== id));
+    } catch (e) {
+      console.error(e);
+      setError(e.message || "Failed to delete product");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  
+
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold">Products</h2>
-        <button
-          onClick={loadProducts}
-          className="text-sm px-3 py-1 border rounded"
-          type="button"
-        >
-          Refresh
-        </button>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowAdd((s) => !s)}
+            className="text-sm px-3 py-1 border rounded"
+            type="button"
+          >
+            {showAdd ? "Close" : "Add"}
+          </button>
+
+          <button
+            onClick={loadProducts}
+            className="text-sm px-3 py-1 border rounded"
+            type="button"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
+
       {error && <div className="mb-2 text-sm text-red-600">{error}</div>}
+
+      {showAdd && (
+        <div className="border rounded p-3 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <input
+              className="border rounded px-2 py-1 text-sm"
+              placeholder="Name"
+              value={form.name}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+            />
+            <input
+              className="border rounded px-2 py-1 text-sm"
+              placeholder="Brand"
+              value={form.brand}
+              onChange={(e) => setForm((p) => ({ ...p, brand: e.target.value }))}
+            />
+            <input
+              className="border rounded px-2 py-1 text-sm"
+              placeholder="Category"
+              value={form.category}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, category: e.target.value }))
+              }
+            />
+            <input
+              className="border rounded px-2 py-1 text-sm"
+              placeholder="Base Price"
+              type="number"
+              value={form.basePrice}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, basePrice: e.target.value }))
+              }
+            />
+          </div>
+
+          <button
+            onClick={addProduct}
+            disabled={busy || !form.name}
+            className="mt-3 text-sm px-3 py-1 border rounded"
+            type="button"
+          >
+            {busy ? "Saving..." : "Create"}
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div>Loading products...</div>
       ) : (
@@ -375,36 +534,71 @@ function ProductsPanel() {
                 <th className="p-2 border">Brand</th>
                 <th className="p-2 border">Category</th>
                 <th className="p-2 border">Base Price</th>
+                <th className="p-2 border">In Stock</th>
                 <th className="p-2 border">Variants</th>
+                <th className="p-2 border">Actions</th>
               </tr>
             </thead>
+
             <tbody>
-              {products.map((p) => (
-                <tr key={p._id}>
-                  <td className="p-2 border">{p.name}</td>
-                  <td className="p-2 border">{p.brand}</td>
-                  <td className="p-2 border">{p.category}</td>
-                  <td className="p-2 border">Rs. {p.basePrice}</td>
-                  <td className="p-2 border text-xs">
-                    {Array.isArray(p.variants) &&
-                      p.variants
+              {products.map((p) => {
+                const t = totalStock(p);
+                const inStock = t > 0;
+
+                return (
+                  <tr key={p._id}>
+                    <td className="p-2 border">{p.name}</td>
+                    <td className="p-2 border">{p.brand}</td>
+                    <td className="p-2 border">{p.category}</td>
+                    <td className="p-2 border">Rs. {p.basePrice}</td>
+
+                    <td className="p-2 border">
+                      {inStock ? (
+                        <span className="text-green-700 font-medium">
+                          Yes (Total {t})
+                        </span>
+                      ) : (
+                        <span className="text-red-700 font-medium">No</span>
+                      )}
+                    </td>
+
+                    <td className="p-2 border text-xs">
+                      {(p.variants || [])
                         .map((v) => `${v.color} (${(v.sizes || []).length} sizes)`)
                         .join(", ")}
+                    </td>
+
+                    <td className="p-2 border">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          className="text-xs px-2 py-1 border rounded"
+                          type="button"
+                          disabled={busy}
+                          onClick={() => deleteProduct(p._id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {products.length === 0 && (
+                <tr>
+                  <td className="p-3 text-center text-gray-500" colSpan={7}>
+                    No products
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       )}
-      <p className="mt-2 text-xs text-gray-500">
-        Note: For full CRUD (create/update/delete) you would typically build a
-        separate product editor form. This panel shows a read-only admin view
-        tied to the Task 8 product schema.
-      </p>
     </div>
   );
 }
+
 
 function OrdersPanel() {
   const [orders, setOrders] = useState([]);
@@ -419,7 +613,13 @@ function OrdersPanel() {
       const res = await fetch(`${API}/api/orders/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Server did not return JSON. Got: ${text.slice(0, 60)}...`);
+      }
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Failed to load orders");
       }
@@ -437,25 +637,34 @@ function OrdersPanel() {
   }, []);
 
   async function updateStatus(id, status) {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API}/api/orders/${id}/status`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ orderStatus: status }),
+    });
+
+    const text = await res.text();
+    let data;
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API}/api/orders/${id}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ orderStatus: status }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to update status");
-      }
-      loadOrders();
-    } catch (e) {
-      setError(e.message);
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(`Server did not return JSON. Got: ${text.slice(0, 60)}...`);
     }
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Failed to update status");
+    }
+
+    loadOrders();
+  } catch (e) {
+    setError(e.message);
   }
+}
 
   return (
     <div className="mt-4">

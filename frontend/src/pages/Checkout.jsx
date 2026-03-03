@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API } from '../api';
 
+function getCartKey() {
+  const u = JSON.parse(localStorage.getItem("user") || "null");
+  const id = u?._id || u?.id || u?.email;
+  return id ? `cart_${id}` : "cart_guest";
+}
+
+
 export default function Checkout() {
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
@@ -11,6 +18,21 @@ export default function Checkout() {
   const [promoApplied, setPromoApplied] = useState(null);
   const [discount, setDiscount] = useState(0);
   const [shipping, setShipping] = useState(0);
+
+  useEffect(() => {
+  const src = "https://www.payhere.lk/lib/payhere.js";
+  if (document.querySelector(`script[src="${src}"]`)) return;
+
+  const s = document.createElement("script");
+  s.src = src;
+  s.async = true;
+  document.body.appendChild(s);
+
+  return () => {
+    // optional: keep it loaded (usually ok). If you want remove:
+    // s.remove();
+  };
+}, []);
 
   // Form fields
   const [formData, setFormData] = useState({
@@ -31,7 +53,8 @@ export default function Checkout() {
       return;
     }
 
-    const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const key = getCartKey();
+    const storedCart = JSON.parse(localStorage.getItem(key) || '[]');
     if (!storedCart || storedCart.length === 0) {
       navigate('/cart');
       return;
@@ -65,8 +88,30 @@ export default function Checkout() {
       .catch(err => console.error('Failed to load user data:', err));
   }, [navigate]);
 
-  const subtotal = cart.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 1)), 0);
+  
+  // const subtotal = cart.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 1)), 0);
+  const getItemPrice = (item) => {
+    const raw =
+      item.price ??
+      item.variant?.price ??
+      item.selectedVariant?.price ??
+      item.basePrice ??
+      0;
+
+    // handles "Rs. 2,499" / "2,499"
+    return Number(String(raw).replace(/[^0-9.]/g, "")) || 0;
+  };
+
+  const getItemQty = (item) =>
+    Number(item.qty ?? item.quantity ?? item.count ?? 1) || 1;
+
+  const subtotal = cart.reduce((sum, item) => {
+    return sum + getItemPrice(item) * getItemQty(item);
+  }, 0);
+
   const total = subtotal - discount + shipping;
+
+  const itemCount = cart.reduce((n, item) => n + getItemQty(item), 0);
 
   function handleInputChange(e) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -153,8 +198,8 @@ export default function Checkout() {
         size: item.size || item.sizeLabel || null,
         sizeLabel: item.sizeLabel || item.size || null,
         sku: item.sku || null,
-        price: Number(item.price || 0),
-        qty: Number(item.qty || 1)
+        price: getItemPrice(item),
+        qty: getItemQty(item)
       }));
 
       // Create order
@@ -185,25 +230,46 @@ export default function Checkout() {
         return;
       }
 
+      const amount = total.toFixed(2);
+
+      const hashRes = await fetch(`${API}/api/payhere/hash`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: orderData.orderId,
+          amount,
+          currency: "LKR",
+        }),
+      });
+
+      const hashData = await hashRes.json();
+      if (!hashData.success) throw new Error(hashData.error || "Hash generation failed");
+
       // Prepare PayHere payment
       const payment = {
-        sandbox: import.meta.env.VITE_PAYHERE_SANDBOX !== 'false',
+        sandbox: import.meta.env.VITE_PAYHERE_SANDBOX !== "false",
         merchant_id: import.meta.env.VITE_PAYHERE_MERCHANT_ID,
-        return_url: `${window.location.origin}/pay/result?status=success`,
-        cancel_url: `${window.location.origin}/pay/result?status=cancel`,
-        notify_url: `https://pimply-interspatial-randa.ngrok-free.dev/api/payhere-notify`,
+        return_url: `${window.location.origin}/pay/result?status=success&order_id=${orderData.orderId}`,
+        cancel_url: `${window.location.origin}/pay/result?status=cancel&order_id=${orderData.orderId}`,
+        notify_url: `https://pimply-interspatial-randa.ngrok-free.dev/api/orders/payhere-notify`,
         order_id: orderData.orderId,
-        items: cart.map(i => i.name).join(', ').substring(0, 100) || 'Cart Checkout',
-        amount: total.toFixed(2),
-        currency: 'LKR',
+        items: cart.map(i => i.name).join(", ").substring(0, 100) || "Cart Checkout",
+        amount,
+        currency: "LKR",
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email,
         phone: formData.phone,
         address: formData.address,
         city: formData.city,
-        country: formData.country
+        country: formData.country,
+        hash: hashData.hash, // ✅ THIS IS THE KEY FIX
       };
+
+    
+
+      
+  
 
       localStorage.setItem("last_order_id", orderData.orderId);
 
@@ -376,7 +442,7 @@ export default function Checkout() {
           
           <div className="space-y-2 mb-4">
             <div className="flex justify-between text-sm">
-              <span>Subtotal ({cart.length} {cart.length === 1 ? 'item' : 'items'})</span>
+              <span>Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'})</span>
               <span>Rs. {subtotal.toFixed(2)}</span>
             </div>
             {discount > 0 && (

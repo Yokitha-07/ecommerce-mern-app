@@ -2,6 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { API } from "../api";
 
+function getCartKey() {
+  const u = JSON.parse(localStorage.getItem("user") || "null");
+  const id = u?._id || u?.id || u?.email;
+  return id ? `cart_${id}` : "cart_guest";
+}
+
 export default function Cart() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -12,17 +18,30 @@ export default function Cart() {
     loadCart();
   }, []);
 
+  // function loadCart() {
+  //   try {
+  //     const stored = JSON.parse(localStorage.getItem("cart") || "[]");
+  //     setItems(Array.isArray(stored) ? stored : []);
+  //     setError("");
+  //   } catch (e) {
+  //     console.error("Cart load error:", e);
+  //     setError("Failed to load cart.");
+  //     setItems([]);
+  //   }
+  // }
+
   function loadCart() {
-    try {
-      const stored = JSON.parse(localStorage.getItem("cart") || "[]");
-      setItems(Array.isArray(stored) ? stored : []);
-      setError("");
-    } catch (e) {
-      console.error("Cart load error:", e);
-      setError("Failed to load cart.");
-      setItems([]);
-    }
+  try {
+    const key = getCartKey();
+    const stored = JSON.parse(localStorage.getItem(key) || "[]");
+    setItems(Array.isArray(stored) ? stored : []);
+    setError("");
+  } catch (e) {
+    console.error("Cart load error:", e);
+    setError("Failed to load cart.");
+    setItems([]);
   }
+}
 
   function updateQty(index, qty) {
     const q = Math.max(1, Math.min(999, Number(qty) || 1));
@@ -38,20 +57,37 @@ export default function Cart() {
     saveCart(next);
   }
 
+  // function saveCart(cartItems) {
+  //   try {
+  //     localStorage.setItem("cart", JSON.stringify(cartItems));
+  //     setError("");
+  //   } catch (e) {
+  //     console.error("Cart save error:", e);
+  //     setError("Failed to save cart.");
+  //   }
+  // }
+
   function saveCart(cartItems) {
-    try {
-      localStorage.setItem("cart", JSON.stringify(cartItems));
-      setError("");
-    } catch (e) {
-      console.error("Cart save error:", e);
-      setError("Failed to save cart.");
-    }
+  try {
+    const key = getCartKey();
+    localStorage.setItem(key, JSON.stringify(cartItems));
+    setError("");
+  } catch (e) {
+    console.error("Cart save error:", e);
+    setError("Failed to save cart.");
   }
+}
+
+  // function clearCart() {
+  //   setItems([]);
+  //   localStorage.removeItem("cart");
+  // }
 
   function clearCart() {
-    setItems([]);
-    localStorage.removeItem("cart");
-  }
+  const key = getCartKey();
+  setItems([]);
+  localStorage.removeItem(key);
+}
 
   // Validate cart items before checkout
   function validateCart() {

@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const Order = require('../models/Order');
+const { authorize } = require("../middleware/auth");
 
 function verifyPayHereMd5(body, merchantSecret) {
     const { merchant_id='', order_id='', payhere_amount='', payhere_currency='', status_code='', md5sig='' } = body;
@@ -33,6 +34,18 @@ router.post("/create", verifyToken, async (req, res) => {
   res.json({ success: true, orderId: order._id, total });
 });
 
+// GET /api/orders/all  (admin)
+router.get("/all", authorize(["admin"]), async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json({ success: true, data: orders }); // ✅ add success
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message }); // ✅ consistent
+  }
+});
+
+
+
 router.post('/payhere-notify', async (req,res)=>{
     try {
         const body = req.body;
@@ -49,6 +62,39 @@ router.post('/payhere-notify', async (req,res)=>{
         res.sendStatus(200);
     } catch(e){ res.status(500).send('error'); }
 });
+
+async function handleStatusUpdate(req, res) {
+  try {
+    const { orderStatus } = req.body;
+
+    if (!orderStatus) {
+      return res.status(400).json({ success: false, error: "Missing orderStatus" });
+    }
+
+    const allowed = ["created", "processing", "delivered", "cancelled"];
+    if (!allowed.includes(orderStatus)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid orderStatus. Allowed: ${allowed.join(", ")}`
+      });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, error: "Order not found" });
+    }
+
+    order.orderStatus = orderStatus;
+    await order.save();
+
+    return res.json({ success: true, data: order });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+router.put("/:id/status", authorize(["admin"]), handleStatusUpdate);
+router.patch("/:id/status", authorize(["admin"]), handleStatusUpdate);
 
 
 module.exports = router;

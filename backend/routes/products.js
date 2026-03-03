@@ -1,18 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const { authorize } = require('../middleware/auth'); // adjust path if needed
 
-// GET /api/products
-// Task 8-ready:
-// - supports variants (colors/sizes) via nested queries
-// - price filtering/sorting based on basePrice
-// - basic meta pagination
-// Query params:
-//   page, limit, sort,
-//   category, brand, tags (csv),
-//   minPrice, maxPrice,
-//   colors (csv), sizes (csv),
-//   rating, inStock, search, isDeal
+
 router.get('/', async (req, res) => {
   try {
     const {
@@ -162,6 +153,50 @@ router.get('/:id', async (req, res) => {
     res.json(p);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ✅ POST /api/products  (ADD product)
+// CREATE product (admin only)
+router.post("/", authorize(['admin']), async (req, res) => {
+  try {
+    const created = await Product.create(req.body);
+    res.status(201).json({ data: created });
+  } catch (e) {
+    res.status(400).json({ msg: e.message });
+  }
+});
+
+// ✅ DELETE /api/products/:id  (DELETE product)
+// DELETE product (admin only)
+router.delete("/:id", authorize(['admin']), async (req, res) => {
+  try {
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ msg: "Deleted" });
+  } catch (e) {
+    res.status(400).json({ msg: e.message });
+  }
+});
+
+// ✅ PATCH /api/products/:id/stock  (UPDATE stock => controls "inStock")
+//
+// body: { variantIndex: 0, sizeIndex: 1, stock: 15 }
+// UPDATE stock (admin only)
+router.patch("/:id/stock", authorize(['admin']), async (req, res) => {
+  try {
+    const { variantIndex, sizeIndex, stock } = req.body;
+
+    const path = `variants.${variantIndex}.sizes.${sizeIndex}.stock`;
+
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      { $set: { [path]: Number(stock || 0) } },
+      { new: true }
+    );
+
+    res.json({ data: updated });
+  } catch (e) {
+    res.status(400).json({ msg: e.message });
   }
 });
 
