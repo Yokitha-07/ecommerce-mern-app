@@ -19,7 +19,15 @@ export default function PaymentResult() {
 
     setOrderId(orderIdParam || stored || "");
 
-    localStorage.removeItem("cart");
+    // ✅ Remove correct cart key
+    const u = JSON.parse(localStorage.getItem("user") || "null");
+    const id = u?._id || u?.id || u?.email;
+    const cartKey = id ? `cart_${id}` : "cart_guest";
+
+    localStorage.removeItem(cartKey);
+    localStorage.removeItem("cart"); // optional fallback
+
+    console.log("Cart cleared:", cartKey);
   }
 }, [status, searchParams]);
 
