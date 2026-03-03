@@ -12,6 +12,30 @@ function verifyPayHereMd5(body, merchantSecret) {
     return localMd5 === (md5sig || '').toUpperCase();
 }
 
+
+const md5Upper = (str) =>
+  crypto.createHash("md5").update(str).digest("hex").toUpperCase();
+
+router.post("/payhere/hash", (req, res) => {
+  const { order_id, amount, currency } = req.body;
+
+  const merchantId = process.env.PAYHERE_MERCHANT_ID;
+  const merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
+
+  if (!merchantId || !merchantSecret) {
+    return res.status(500).json({ error: "Missing PAYHERE env vars" });
+  }
+
+  const formattedAmount = Number(amount).toFixed(2);
+  const secretHash = md5Upper(merchantSecret);
+
+  const hash = md5Upper(
+    merchantId + String(order_id) + formattedAmount + String(currency) + secretHash
+  );
+
+  res.json({ hash });
+});
+
 const { verifyToken } = require("../middleware/auth");
 
 router.post("/create", verifyToken, async (req, res) => {
@@ -96,5 +120,8 @@ async function handleStatusUpdate(req, res) {
 router.put("/:id/status", authorize(["admin"]), handleStatusUpdate);
 router.patch("/:id/status", authorize(["admin"]), handleStatusUpdate);
 
+router.get("/payhere-notify", (req, res) => {
+  res.status(200).json({ ok: true, msg: "PayHere notify endpoint is reachable (GET ping)" });
+});
 
 module.exports = router;

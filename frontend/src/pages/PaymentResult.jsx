@@ -13,14 +13,35 @@ export default function PaymentResult() {
   const [orderId, setOrderId] = useState("");
 
   useEffect(() => {
-    if (status === "success") {
-      const orderIdParam = searchParams.get("order_id");
-      if (orderIdParam) setOrderId(orderIdParam);
+  if (status === "success") {
+    const orderIdParam = searchParams.get("order_id");
+    const stored = localStorage.getItem("last_order_id");
 
-      // Clear cart on successful payment
-      localStorage.removeItem("cart");
-    }
-  }, [status, searchParams]);
+    setOrderId(orderIdParam || stored || "");
+
+    localStorage.removeItem("cart");
+  }
+}, [status, searchParams]);
+
+  useEffect(() => {
+  if (status !== "success") return;
+
+  const id = localStorage.getItem("last_order_id");
+  if (!id) return;
+
+  // clear cart
+  localStorage.removeItem("cart");
+
+  // optional: fetch order to display paid status
+  (async () => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`https://ecommerce-mern-app-43id.onrender.com/api/orders/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    // show data.paymentStatus on the page
+  })();
+}, [status]);
 
   const isSuccess = status === "success";
   const isCancel = status === "cancel";
@@ -33,8 +54,7 @@ export default function PaymentResult() {
     : "Payment Result";
 
   const icon = isSuccess ? "✅" : isCancel ? "❌" : "ℹ️";
-  const stored = localStorage.getItem("last_order_id");
-if (stored) setOrderId(stored);
+  
 
   return (
     <div className="container mx-auto p-6 text-center">
