@@ -30,11 +30,11 @@ const Register = () => {
       if (!res.ok) throw new Error(data.msg || data.message || "Register failed");
 
       // If your backend returns token+user, keep this:
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // localStorage.setItem("token", data.token);
+      // localStorage.setItem("user", JSON.stringify(data.user));
 
       // after register -> go home (or navigate("/login") if you prefer)
-      navigate("/");
+      navigate("/login");
     } catch (err) {
       setError(err.message);
     }
