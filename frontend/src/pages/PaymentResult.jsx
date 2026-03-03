@@ -27,7 +27,12 @@ export default function PaymentResult() {
     localStorage.removeItem(cartKey);
     localStorage.removeItem("cart"); // optional fallback
 
-    console.log("Cart cleared:", cartKey);
+    // console.log("Cart cleared:", cartKey);
+
+    // Redirect to cart so it reloads clean
+    setTimeout(() => {
+      window.location.href = "/cart";
+    }, 100);
   }
 }, [status, searchParams]);
 
