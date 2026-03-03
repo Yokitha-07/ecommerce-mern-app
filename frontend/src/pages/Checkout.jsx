@@ -267,13 +267,27 @@ export default function Checkout() {
       };
 
     
-
-      
-  
-
       localStorage.setItem("last_order_id", orderData.orderId);
+      
+      // ✅ stop loading before redirecting out
+      setLoading(false);
 
+     const FRONT = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
 
+      window.payhere.onCompleted = function (orderId) {
+        setLoading(false);
+        window.location.href = `${FRONT}/pay/result?status=success&order_id=${orderId}`;
+      };
+      window.payhere.onDismissed = function () {
+        setLoading(false);
+        window.location.href = `${FRONT}/pay/result?status=cancel&order_id=${orderData.orderId}`;
+      };;
+
+window.payhere.onError = function (error) {
+  setLoading(false);
+  setError(String(error || "PayHere error"));
+};
+      
       // Start PayHere payment
       window.payhere.startPayment(payment);
 
