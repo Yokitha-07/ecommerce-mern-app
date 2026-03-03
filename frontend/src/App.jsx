@@ -28,7 +28,7 @@ function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         // App.jsx / Routes
-        <Route path="/payment/result" element={<PaymentResult />} />
+        <Route path="/pay/result" element={<PaymentResult />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<Admin />} />
