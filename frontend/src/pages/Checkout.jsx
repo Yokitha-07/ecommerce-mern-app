@@ -249,8 +249,8 @@ export default function Checkout() {
       const payment = {
         sandbox: import.meta.env.VITE_PAYHERE_SANDBOX !== "false",
         merchant_id: import.meta.env.VITE_PAYHERE_MERCHANT_ID,
-        return_url: `${import.meta.env.VITE_FRONTEND_URL}/pay/result?status=success`,
-        cancel_url: `${import.meta.env.VITE_FRONTEND_URL}/pay/result?status=cancel`,
+        return_url: `${import.meta.env.VITE_FRONTEND_URL}/pay/result?status=success&order_id=${orderData.orderId}`,
+        cancel_url: `${import.meta.env.VITE_FRONTEND_URL}/pay/result?status=cancel&order_id=${orderData.orderId}`,
         notify_url: `https://ecommerce-mern-app-43id.onrender.com/api/orders/payhere-notify`,
         order_id: orderData.orderId,
         items: cart.map(i => i.name).join(", ").substring(0, 100) || "Cart Checkout",
