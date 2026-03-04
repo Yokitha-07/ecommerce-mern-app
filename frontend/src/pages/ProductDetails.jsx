@@ -221,11 +221,11 @@ export default function ProductDetails() {
               camera-controls
               auto-rotate
               ar
-              ar-modes="scene-viewer quick-look webxr"
+              ar-modes="webxr scene-viewer quick-look"
               ar-scale="fixed"
               touch-action="pan-y"
               loading="lazy"
-              reveal="interaction"
+              reveal="auto"
               style={{ width: "100%", maxWidth: "480px", height: "360px" }}
             />
             <p className="mt-2 text-xs text-gray-500">
