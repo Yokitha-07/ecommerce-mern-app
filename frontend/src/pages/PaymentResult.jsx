@@ -30,9 +30,9 @@ export default function PaymentResult() {
     // console.log("Cart cleared:", cartKey);
 
     // Redirect to cart so it reloads clean
-    setTimeout(() => {
-      window.location.href = "/cart";
-    }, 100);
+    // setTimeout(() => {
+    //   window.location.href = "/cart";
+    // }, 100);
   }
 }, [status, searchParams]);
 
