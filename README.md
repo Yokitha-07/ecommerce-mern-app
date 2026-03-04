@@ -41,7 +41,6 @@ This project upgrades a basic store into a **Temu / AliExpress style marketplace
 - **Frontend:** AWS Amplify  - https://main.d3dw11vyw3a8cq.amplifyapp.com/
 - **Backend:** Render  
 
-Frontend connects to backend API using:
 
 
 ## 👨‍💻 Author
