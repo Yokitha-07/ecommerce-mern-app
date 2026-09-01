@@ -5,6 +5,9 @@ This project upgrades a basic store into a **Temu / AliExpress style marketplace
 
 ---
 
+## Live Demo 
+- https://mern-ecommerce-app-yokitha.netlify.app/
+
 ## 🚀 Features
 
 - Product variants (color & size)
